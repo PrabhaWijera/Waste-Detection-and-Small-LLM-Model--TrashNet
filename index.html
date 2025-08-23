@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Waste Classifier + LLM</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; }
+        img { max-width: 100%; margin-top: 10px; border: 1px solid #ccc; padding: 5px; }
+        .result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; }
+        ul { margin: 5px 0; padding-left: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Waste Classification + LLM Recommendation</h1>
+    <form id="uploadForm">
+        <label>Choose an image:</label>
+        <input type="file" id="imageInput" accept="image/*" required>
+
+        <label>Region (optional):</label>
+        <input type="text" id="regionInput" value="LK-11">
+
+        <label>City (optional):</label>
+        <input type="text" id="cityInput" value="Colombo">
+
+        <button type="submit">Classify & Get Recommendation</button>
+    </form>
+
+    <div id="preview"></div>
+    <div class="result" id="result"></div>
+
+    <script>
+        const form = document.getElementById("uploadForm");
+        const preview = document.getElementById("preview");
+        const resultDiv = document.getElementById("result");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const file = document.getElementById("imageInput").files[0];
+            const region = document.getElementById("regionInput").value;
+            const city = document.getElementById("cityInput").value;
+
+            if (!file) return;
+
+            preview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+            resultDiv.innerHTML = "Processing...";
+
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("region", region);
+            formData.append("city", city);
+
+            try {
+                // Step 1: Classify
+                const response = await fetch("http://127.0.0.1:8000/api/classify", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                // Step 2: LLM Recommendation based on prediction
+                const llmResponse = await fetch("http://127.0.0.1:8000/api/llm_recommend", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `description=Predicted waste: ${data.prediction}&region=${region}&city=${city}`
+                });
+                const llmData = await llmResponse.json();
+
+                resultDiv.innerHTML = `
+                    <strong>Prediction:</strong> ${data.prediction} <br>
+                    <strong>Confidence:</strong> ${(data.confidence*100).toFixed(2)}% <br>
+                    <strong>Rule-Based Tips:</strong> 
+                    <ul>${data.recommendation.tips.map(t => `<li>${t}</li>`).join("")}</ul>
+                    <strong>Local Guidance:</strong> ${data.recommendation.local_guidance} <br><br>
+                    <strong>LLM Recommendation:</strong>
+                    <p>${llmData.recommendation}</p>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = `<span style="color:red;">Error: ${err}</span>`;
+            }
+        });
+    </script>
+</body>
+</html>
