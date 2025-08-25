@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Waste Submission</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; }
+        input, select, button { padding: 10px; margin: 5px 0; width: 100%; }
+        img { max-width: 100%; margin-top: 10px; border: 1px solid #ccc; padding: 5px; }
+        .result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Submit Waste Image</h1>
+
+    <form id="wasteForm">
+        <label>Choose an image:</label>
+        <input type="file" id="imageInput" accept="image/*" required>
+
+        <label>Waste Type:</label>
+        <select id="wasteType" required>
+            <option value="">Select type</option>
+            <option value="plastic">Plastic</option>
+            <option value="paper">Paper</option>
+            <option value="glass">Glass</option>
+            <option value="metal">Metal</option>
+            <option value="cardboard">Cardboard</option>
+            <option value="other">Other</option>
+        </select>
+
+        <label>Region (optional):</label>
+        <input type="text" id="regionInput" value="LK-11">
+
+        <label>City (optional):</label>
+        <input type="text" id="cityInput" value="Colombo">
+
+        <button type="submit">Submit Waste</button>
+    </form>
+
+    <div id="preview"></div>
+    <div class="result" id="result"></div>
+
+    <script>
+        const form = document.getElementById("wasteForm");
+        const preview = document.getElementById("preview");
+        const resultDiv = document.getElementById("result");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const file = document.getElementById("imageInput").files[0];
+            const wasteType = document.getElementById("wasteType").value;
+            const region = document.getElementById("regionInput").value;
+            const city = document.getElementById("cityInput").value;
+
+            if (!file || !wasteType) {
+                alert("Please select an image and waste type.");
+                return;
+            }
+
+            preview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+            resultDiv.innerHTML = "Submitting...";
+
+            const formData = new FormData();
+            formData.append("image", file);
+            formData.append("waste_type", wasteType);
+            formData.append("region", region);
+            formData.append("city", city);
+
+            try {
+                const response = await fetch("http://127.0.0.1:8000/api/public/submit_waste", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (err) {
+                resultDiv.innerHTML = `<span style="color:red;">Error: ${err}</span>`;
+            }
+        });
+    </script>
+</body>
+</html>

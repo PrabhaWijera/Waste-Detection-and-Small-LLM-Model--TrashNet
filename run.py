@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from app.routes.user_routes import router as user_router
 from app.routes.admin_routes import router as admin_router
+from app.routes.public_user_routes import user_routes  # APIRouter for public submissions
 
 load_dotenv()
 
@@ -27,9 +28,8 @@ app.add_middleware(
 # Routers
 app.include_router(user_router, prefix="/api", tags=["User"])
 app.include_router(admin_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(user_routes, prefix="/api/public", tags=["Public"])  # ✅ public submissions
 
 @app.get("/")
 def root():
     return {"status": "ok", "service": "waste-management-backend", "time": os.getenv("TZ", "UTC")}
-
-# Run: uvicorn run:app --reload
