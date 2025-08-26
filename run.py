@@ -1,35 +1,29 @@
-import os
+# run.py
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 from app.routes.user_routes import router as user_router
 from app.routes.admin_routes import router as admin_router
-from app.routes.public_user_routes import user_routes  # APIRouter for public submissions
+from app.routes.public_user_routes import user_routes
 
-load_dotenv()
+app = FastAPI(title="YOLOv8 Waste Management API")
 
-app = FastAPI(
-    title="AI-Powered Waste Classification & Recommendation API",
-    version="1.0.0",
-    description="Backend for waste classification using CNN (ResNet) + rule-based/LLM-ready recommendations."
-)
-
-# CORS (adjust for your frontend origins)
-origins = os.getenv("CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Routers
 app.include_router(user_router, prefix="/api", tags=["User"])
 app.include_router(admin_router, prefix="/api/admin", tags=["Admin"])
-app.include_router(user_routes, prefix="/api/public", tags=["Public"])  # ✅ public submissions
+app.include_router(user_routes, prefix="/api/public", tags=["Public"])
 
 @app.get("/")
 def root():
-    return {"status": "ok", "service": "waste-management-backend", "time": os.getenv("TZ", "UTC")}
+    return {"status": "ok", "service": "YOLOv8 Waste API"}
+
+if __name__ == "__main__":
+    uvicorn.run("run:app", host="0.0.0.0", port=8000, reload=True)

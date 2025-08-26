@@ -70,3 +70,13 @@ curl -X POST "http://localhost:8000/api/classify"   -F "image=@/path/to/your/ima
 - Artifacts are saved to `models/artifacts/`. Make sure `label_map.json` and `best_model.pt` exist before running inference.
 - You can plug in an LLM inference (OpenAI, etc.) inside `recommendation_engine.py` if needed.
 - Update region/city-specific guidance rules as your municipality requires.
+
+
+![alt text](image.png)
+ yolo-8 cllasification
+train the fullyolo.py 
+
+yolo task=classify mode=train model=yolov8n-cls.pt data="E:/ICBT/CIS-6002-final presatation ML/FinalProject Backend/TrashNet-OK/waste_management_system/data/archive/dataset_split" epochs=20 imgsz=224 batch=16 name=waste_classification
+![alt text](image-1.png)
+![alt text](image-2.png)
+![alt text](image-3.png)

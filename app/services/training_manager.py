@@ -1,46 +1,50 @@
 import os
-import shutil
-import torch
-from app.services.train_model import train_model
+import threading
 
-NEW_DATA_DIR = "data/new_waste"
-MODEL_PATH = "models/latest_model.pth"
-TRAIN_DATA_DIR = "data/archive/processed_dataset/train"
-MIN_SAMPLES = 1
+# === Configuration ===
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+NEW_DATA_DIR = os.path.join(BASE_DIR, "..", "data", "new")  # adjust if needed
+MIN_SAMPLES = 10  # Minimum new samples required to trigger retraining
 
+
+# === Utility Functions ===
 def count_new_samples():
-    total = 0
+    """
+    Count how many new samples exist in NEW_DATA_DIR.
+    Assumes NEW_DATA_DIR has subfolders (like dataset classes).
+    """
+    if not os.path.exists(NEW_DATA_DIR):
+        return 0
+
+    count = 0
     for root, _, files in os.walk(NEW_DATA_DIR):
-        total += len([f for f in files if f.endswith((".jpg", ".png"))])
-    return total
+        count += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
+    return count
 
-def archive_new_samples():
-    """
-    Move all new samples to the main training dataset
-    and preserve their class folder structure if present.
-    """
-    if not os.path.exists(TRAIN_DATA_DIR):
-        os.makedirs(TRAIN_DATA_DIR)
 
-    for root, dirs, files in os.walk(NEW_DATA_DIR):
-        for file in files:
-            if file.endswith((".jpg", ".png")):
-                class_folder = os.path.basename(root)
-                dest_dir = os.path.join(TRAIN_DATA_DIR, class_folder)
-                os.makedirs(dest_dir, exist_ok=True)
-                shutil.move(os.path.join(root, file), os.path.join(dest_dir, file))
-
-def check_and_trigger_retrain():
+# === Retraining Logic ===
+def run_retrain():
     """
-    Called after each new submission.
-    If enough samples exist, retrains model.
+    Run the retraining pipeline.
+    Replace this placeholder with actual YOLO / ML training logic.
     """
-    sample_count = count_new_samples()
-    if sample_count >= MIN_SAMPLES:
-        print(f"🔄 Retraining model with {sample_count} new samples + TrashNet...")
-        train_model(NEW_DATA_DIR, MODEL_PATH)
-        archive_new_samples()
-        print("✅ Retraining complete and new samples archived")
-        return "Retraining triggered successfully."
+    print("🔄 Starting retraining...")
+    samples = count_new_samples()
+    print(f"📊 Found {samples} new samples in {NEW_DATA_DIR}")
 
-    return f"Not enough new samples yet ({sample_count}/{MIN_SAMPLES})"
+    if samples < MIN_SAMPLES:
+        print(f"❌ Not enough samples. Need at least {MIN_SAMPLES}.")
+        return
+
+    # TODO: Add your YOLOv8 / ML retraining code here
+    print("✅ Retraining completed (placeholder).")
+
+
+# === Async Wrapper ===
+def start_retrain_async():
+    """
+    Start retraining in background so API is non-blocking.
+    """
+    t = threading.Thread(target=run_retrain, daemon=True)
+    t.start()
+    return "Retraining started in background."

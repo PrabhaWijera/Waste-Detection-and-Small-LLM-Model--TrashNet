@@ -1,7 +1,6 @@
+# app/models/recommendation_engine.py
 from datetime import datetime
 
-# Simple rule-based recommendations with Sri Lanka context.
-# Extendable to plug an LLM later.
 class RecommendationEngine:
     BASE_RULES = {
         "plastic": [
@@ -28,7 +27,7 @@ class RecommendationEngine:
         "trash": [
             "Securely bag residual waste.",
             "Avoid mixing with recyclables to reduce contamination."
-        ]
+        ],
     }
 
     REGION_NOTES = {
@@ -37,6 +36,7 @@ class RecommendationEngine:
     }
 
     def recommend(self, label: str, region: str = "LK-11", city: str = "Colombo") -> dict:
+        label = (label or "trash").lower()
         rules = self.BASE_RULES.get(label, self.BASE_RULES["trash"])
         region_note = self.REGION_NOTES.get(region, self.REGION_NOTES["LK-1"])
         tip = f"{region_note} Check {city} Municipal Council notices for latest schedules."
@@ -44,5 +44,5 @@ class RecommendationEngine:
             "label": label,
             "tips": rules,
             "local_guidance": tip,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }

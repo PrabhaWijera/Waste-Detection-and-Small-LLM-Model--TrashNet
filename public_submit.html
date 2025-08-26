@@ -2,44 +2,236 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Waste Submission</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Waste Submission</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; }
-        input, select, button { padding: 10px; margin: 5px 0; width: 100%; }
-        img { max-width: 100%; margin-top: 10px; border: 1px solid #ccc; padding: 5px; }
-        .result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #f9f9f9; }
+        :root {
+            --primary-color: #27ae60;
+            --primary-hover-color: #229954;
+            --secondary-color: #ecf0f1;
+            --secondary-hover-color: #e2e6e7;
+            --background-color: #f4f6f9;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --label-color: #555555;
+            --border-color: #dddddd;
+            --input-focus-border: #27ae60;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .waste-card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 30px var(--shadow-color);
+            padding: 30px 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .waste-card h1 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--label-color);
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+        }
+
+        /* --- NEW STYLES FOR ACTION BUTTONS --- */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            flex: 1; /* Make buttons share space equally */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--secondary-color);
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background-color: var(--secondary-hover-color);
+            border-color: #bbb;
+        }
+
+        .action-btn svg {
+            margin-right: 8px;
+        }
+
+        #captureBtn {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        #captureBtn:hover {
+            background-color: var(--primary-hover-color);
+            border-color: var(--primary-hover-color);
+        }
+        
+        /* --- UPDATED PREVIEW STYLES --- */
+        #preview {
+            width: 100%;
+            min-height: 150px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Ensures image corners are rounded */
+        }
+        
+        #preview:not(:empty) {
+            border: 1px solid var(--border-color); /* solid border once image is shown */
+        }
+        
+        #preview-placeholder {
+            color: #999;
+            text-align: center;
+        }
+
+        #preview img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        /* Submit Button */
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: var(--primary-hover-color);
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
-    <h1>Submit Waste Image</h1>
 
-    <form id="wasteForm">
-        <label>Choose an image:</label>
-        <input type="file" id="imageInput" accept="image/*" required>
+    
+    <div class="waste-card">
+        <h1>Report Waste</h1>
 
-        <label>Waste Type:</label>
-        <select id="wasteType" required>
-            <option value="">Select type</option>
-            <option value="plastic">Plastic</option>
-            <option value="paper">Paper</option>
-            <option value="glass">Glass</option>
-            <option value="metal">Metal</option>
-            <option value="cardboard">Cardboard</option>
-            <option value="other">Other</option>
-        </select>
+        <form id="wasteForm" novalidate>
+            <input type="file" id="captureInput" accept="image/*" capture="environment" style="display:none;">
+            <input type="file" id="uploadInput" accept="image/*" style="display:none;">
+            
+            <div class="form-group">
+                <label>Waste Image</label>
+                <div class="action-buttons">
+                    <button type="button" class="action-btn" id="captureBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                            <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
+                        </svg>
+                        Capture Photo
+                    </button>
+                    <button type="button" class="action-btn" id="uploadBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                           <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                           <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+                        </svg>
+                        Upload Image
+                    </button>
+                </div>
+                <div id="preview">
+                    <span id="preview-placeholder">Image preview will appear here</span>
+                </div>
+            </div>
 
-        <label>Region (optional):</label>
-        <input type="text" id="regionInput" value="LK-11">
+            <div class="form-group">
+                <label for="wasteType">Waste Type</label>
+                <select id="wasteType" required>
+                    <option value="" disabled selected>Select a type...</option>
+                    <option value="plastic">Plastic</option>
+                    <option value="paper">Paper</option>
+                    <option value="glass">Glass</option>
+                    <option value="metal">Metal</option>
+                    <option value="cardboard">Cardboard</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="regionInput">Region</label>
+                <input type="text" id="regionInput" placeholder="e.g., LK-11">
+            </div>
+            
+            <div class="form-group">
+                <label for="cityInput">City</label>
+                <input type="text" id="cityInput" placeholder="e.g., Colombo">
+            </div>
 
-        <label>City (optional):</label>
-        <input type="text" id="cityInput" value="Colombo">
-
-        <button type="submit">Submit Waste</button>
-    </form>
-
-    <div id="preview"></div>
-    <div class="result" id="result"></div>
-
+            <button type="submit">Submit Report</button>
+        </form>
+    </div>
     <script>
         const form = document.getElementById("wasteForm");
         const preview = document.getElementById("preview");
