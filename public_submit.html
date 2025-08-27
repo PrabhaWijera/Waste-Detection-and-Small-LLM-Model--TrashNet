@@ -83,7 +83,6 @@
             box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
         }
 
-        /* --- NEW STYLES FOR ACTION BUTTONS --- */
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -91,7 +90,7 @@
         }
 
         .action-btn {
-            flex: 1; /* Make buttons share space equally */
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -124,8 +123,7 @@
             background-color: var(--primary-hover-color);
             border-color: var(--primary-hover-color);
         }
-        
-        /* --- UPDATED PREVIEW STYLES --- */
+
         #preview {
             width: 100%;
             min-height: 150px;
@@ -134,13 +132,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden; /* Ensures image corners are rounded */
+            overflow: hidden;
         }
-        
+
         #preview:not(:empty) {
-            border: 1px solid var(--border-color); /* solid border once image is shown */
+            border: 1px solid var(--border-color);
         }
-        
+
         #preview-placeholder {
             color: #999;
             text-align: center;
@@ -152,7 +150,6 @@
             object-fit: cover;
         }
 
-        /* Submit Button */
         button[type="submit"] {
             width: 100%;
             padding: 15px;
@@ -174,15 +171,12 @@
     </style>
 </head>
 <body>
-
-    
     <div class="waste-card">
         <h1>Report Waste</h1>
-
         <form id="wasteForm" novalidate>
             <input type="file" id="captureInput" accept="image/*" capture="environment" style="display:none;">
             <input type="file" id="uploadInput" accept="image/*" style="display:none;">
-            
+
             <div class="form-group">
                 <label>Waste Image</label>
                 <div class="action-buttons">
@@ -215,7 +209,7 @@
                     <option value="glass">Glass</option>
                     <option value="metal">Metal</option>
                     <option value="cardboard">Cardboard</option>
-                    <option value="other">Other</option>
+                    <option value="trash">Trash</option>
                 </select>
             </div>
             
@@ -232,15 +226,38 @@
             <button type="submit">Submit Report</button>
         </form>
     </div>
+
     <script>
-        const form = document.getElementById("wasteForm");
+        const captureBtn = document.getElementById("captureBtn");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const captureInput = document.getElementById("captureInput");
+        const uploadInput = document.getElementById("uploadInput");
         const preview = document.getElementById("preview");
-        const resultDiv = document.getElementById("result");
+        const form = document.getElementById("wasteForm");
+
+        function displayPreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        captureBtn.addEventListener("click", () => captureInput.click());
+        uploadBtn.addEventListener("click", () => uploadInput.click());
+
+        captureInput.addEventListener("change", () => {
+            if (captureInput.files[0]) displayPreview(captureInput.files[0]);
+        });
+
+        uploadInput.addEventListener("change", () => {
+            if (uploadInput.files[0]) displayPreview(uploadInput.files[0]);
+        });
 
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
 
-            const file = document.getElementById("imageInput").files[0];
+            const file = captureInput.files[0] || uploadInput.files[0];
             const wasteType = document.getElementById("wasteType").value;
             const region = document.getElementById("regionInput").value;
             const city = document.getElementById("cityInput").value;
@@ -249,9 +266,6 @@
                 alert("Please select an image and waste type.");
                 return;
             }
-
-            preview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
-            resultDiv.innerHTML = "Submitting...";
 
             const formData = new FormData();
             formData.append("image", file);
@@ -265,9 +279,9 @@
                     body: formData
                 });
                 const data = await response.json();
-                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                alert("Submitted successfully!");
             } catch (err) {
-                resultDiv.innerHTML = `<span style="color:red;">Error: ${err}</span>`;
+                alert("Error submitting: " + err);
             }
         });
     </script>
