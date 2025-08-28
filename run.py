@@ -3,10 +3,10 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes.user_routes import router as user_router
+from app.routes.urban_routes import router as user_router
 from app.routes.admin_routes import router as admin_router
 from app.routes.public_user_routes import user_routes
-
+from app.routes.auth_routes import router as auth_router   # NEW
 app = FastAPI(title="YOLOv8 Waste Management API")
 
 app.add_middleware(
@@ -17,10 +17,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(user_router, prefix="/api", tags=["User"])
+app.include_router(user_router, prefix="/api", tags=["Urban"])  # <-- this was 'User', rename to 'Urban'
 app.include_router(admin_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(user_routes, prefix="/api/public", tags=["Public"])
 
+# New routers
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])     # Register/Login
 @app.get("/")
 def root():
     return {"status": "ok", "service": "YOLOv8 Waste API"}

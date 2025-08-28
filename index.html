@@ -1,164 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Waste Classifier + LLM</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 20px; 
-            padding: 0 10px; 
-            background: #f5f5f5; 
-        }
-
-        h1 { 
-            text-align: center; 
-            font-size: 1.5rem; 
-            margin-bottom: 20px; 
-        }
-
-        form {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 8px rgba(0,0,0,0.1);
-            max-width: 500px;
-            margin: auto;
-        }
-
-        input, button {
-            padding: 12px;
-            margin: 8px 0;
-            width: 100%;
-            box-sizing: border-box;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 1rem;
-        }
-
-        button {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        img {
-            max-width: 100%;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            padding: 5px;
-            border-radius: 6px;
-        }
-
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            background: #fff;
-            box-shadow: 0 0 8px rgba(0,0,0,0.1);
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        ul {
-            padding-left: 20px;
-        }
-
-        @media (max-width: 600px) {
-            body {
-                margin: 10px;
-            }
-            form, .result {
-                padding: 10px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Waste Classifier + LLM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #f0f2f5;
+        margin: 0;
+        padding: 0;
+    }
+    header {
+        background: #4CAF50;
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+    }
+    form {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        max-width: 500px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    input, select, button {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+        box-sizing: border-box;
+    }
+    button {
+        background: #4CAF50;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    button:hover {
+        background: #45a049;
+    }
+    #preview img {
+        max-width: 100%;
+        margin-top: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .result-card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        max-width: 500px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    .result-card h3 {
+        margin-top: 0;
+        color: #333;
+    }
+    ul {
+        padding-left: 20px;
+    }
+</style>
 </head>
 <body>
-    <h1>Waste Classification + LLM Recommendation</h1>
+<header>Waste Classifier + LLM Recommendation</header>
+<main>
     <form id="uploadForm">
-        <label>Choose an image:</label>
+        <label>Select an image:</label>
         <input type="file" id="imageInput" accept="image/*" required>
-
-        <label>Region (optional):</label>
-        <input type="text" id="regionInput" value="LK-11">
-
-        <label>City (optional):</label>
-        <input type="text" id="cityInput" value="Colombo">
-
+        <label>Nearby Urban Center:</label>
+        <select id="urbanCenterSelect" required>
+            <option value="" disabled selected>Select nearest urban center</option>
+            <option value="colombo">Colombo</option>
+            <option value="gampaha">Gampaha</option>
+            <option value="kandy">Kandy</option>
+            <option value="galle">Galle</option>
+            <option value="jaffna">Jaffna</option>
+            <option value="kurunegala">Kurunegala</option>
+            <option value="ratnapura">Ratnapura</option>
+            <option value="anuradhapura">Anuradhapura</option>
+            <option value="batticaloa">Batticaloa</option>
+        </select>
         <button type="submit">Classify & Get Recommendation</button>
-          <br>
         <div id="preview"></div>
     </form>
 
-   
-    <div class="result" id="result"></div>
+    <div id="result"></div>
+</main>
 
-    <script>
-        const form = document.getElementById("uploadForm");
-        const preview = document.getElementById("preview");
-        const resultDiv = document.getElementById("result");
+<script>
+const form = document.getElementById("uploadForm");
+const preview = document.getElementById("preview");
+const resultDiv = document.getElementById("result");
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const file = document.getElementById("imageInput").files[0];
-            const region = document.getElementById("regionInput").value;
-            const city = document.getElementById("cityInput").value;
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-            if (!file) return;
+    const token = localStorage.getItem("token");
+    if (!token) {
+        resultDiv.innerHTML = `<div class="result-card" style="color:red;">Please login first.</div>`;
+        return;
+    }
 
-            preview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
-            resultDiv.innerHTML = "Processing...";
+    const file = document.getElementById("imageInput").files[0];
+    const urbanCenter = document.getElementById("urbanCenterSelect").value;
+    if (!file || !urbanCenter) return;
 
-            const formData = new FormData();
-            formData.append("image", file);
-            formData.append("region", region);
-            formData.append("city", city);
+    preview.innerHTML = `<img src="${URL.createObjectURL(file)}">`;
+    resultDiv.innerHTML = `<div class="result-card">Processing...</div>`;
 
-            try {
-                // Step 1: Classify
-                const response = await fetch("http://127.0.0.1:8000/api/classify", {
-                    method: "POST",
-                    body: formData
-                });
-                const data = await response.json();
+    const formData = new FormData();
+    formData.append("image", file);
 
-                // Step 2: LLM Recommendation based on prediction
-                const llmResponse = await fetch("http://127.0.0.1:8000/api/llm_recommend", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: `description=Predicted waste: ${data.prediction}&region=${region}&city=${city}`
-                });
-                const llmData = await llmResponse.json();
-
-                // Convert LLM recommendation string into bullet points
-                let llmPoints = llmData.recommendation
-                    .split(/[-\n]+/)
-                    .map(pt => pt.trim())
-                    .filter(pt => pt.length > 0);
-
-                resultDiv.innerHTML = `
-                    <strong>Prediction:</strong> ${data.prediction} <br>
-                    <strong>Confidence:</strong> ${(data.confidence*100).toFixed(2)}% <br>
-                    <strong>Rule-Based Tips:</strong> 
-                    <ul>${data.recommendation.tips.map(t => `<li>${t}</li>`).join("")}</ul>
-                    <strong>Local Guidance:</strong> ${data.recommendation.local_guidance} <br><br>
-                    <strong>LLM Recommendation:</strong>
-                    <ul>${llmPoints.map(pt => `<li>${pt}</li>`).join("")}</ul>
-                `;
-            } catch (err) {
-                resultDiv.innerHTML = `<span style="color:red;">Error: ${err}</span>`;
-            }
+    try {
+        // Step 1: Classify
+        const response = await fetch("http://127.0.0.1:8000/api/classify", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData
         });
-    </script>
+        const data = await response.json();
+
+        // Step 2: LLM Recommendation
+        const llmResponse = await fetch("http://127.0.0.1:8000/api/llm_recommend", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": `Bearer ${token}`
+            },
+            body: `description=Predicted waste: ${data.prediction}`
+        });
+        const llmData = await llmResponse.json();
+
+        // Safely handle undefined or non-string recommendations
+        const llmPoints = Array.isArray(llmData.recommendation)
+            ? llmData.recommendation
+            : typeof llmData.recommendation === "string"
+                ? llmData.recommendation.split(/[-\n]+/).map(pt => pt.trim()).filter(pt => pt)
+                : [];
+
+        resultDiv.innerHTML = `
+            <div class="result-card">
+                <h3>Prediction:</h3> ${data.prediction || "N/A"} <br>
+                <strong>Confidence:</strong> ${(data.confidence*100 || 0).toFixed(2)}% <br>
+                <h3>Rule-Based Tips:</h3>
+                <ul>${(data.recommendation?.tips || []).map(t => `<li>${t}</li>`).join("")}</ul>
+                <strong>Local Guidance:</strong> ${data.recommendation?.local_guidance || "N/A"} <br>
+                <h3>LLM Recommendation:</h3>
+                <ul>${llmPoints.map(pt => `<li>${pt}</li>`).join("")}</ul>
+            </div>
+        `;
+    } catch (err) {
+        resultDiv.innerHTML = `<div class="result-card" style="color:red;">Error: ${err}</div>`;
+    }
+});
+</script>
 </body>
 </html>

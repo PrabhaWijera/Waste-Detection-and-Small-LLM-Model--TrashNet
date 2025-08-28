@@ -9,7 +9,7 @@ class WasteLLM:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
-    def recommend(self, text: str, region=None, city=None) -> str:
+    def recommend(self, text: str) -> str:
         text = text.strip()
         if not text:
             return "- Dispose of waste according to local guidelines."
