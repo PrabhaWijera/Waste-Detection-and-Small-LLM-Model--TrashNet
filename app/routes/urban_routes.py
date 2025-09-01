@@ -68,50 +68,30 @@ async def llm_recommend(description: str = Form(...), current_user: dict = Depen
     return {"input": description, "recommendation": result}
 
 
+ # Pydantic model
 class SubmissionClassification(BaseModel):
     submission_id: int
     prediction: str
     confidence: float
     recommendation: str
+    urban_center: str
 
 @router.put("/classify-update")
 async def classify_submission(data: SubmissionClassification):
-    conn = db  # Use your existing DB connection
-    cursor = conn.cursor()
-
+    cursor = db.cursor()
     try:
-        # Update the processed field in submissions table
         cursor.execute("""
             UPDATE submissions
-            SET processed = TRUE
+            SET processed = 1
             WHERE id = %s
         """, (data.submission_id,))
-
-        # Insert classification record into urban_submissions
-        cursor.execute("""
-            INSERT INTO urban_submissions
-            (urban_user_id, urban_center, prediction, confidence, recommendation, source, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (
-            data.submission_id,
-            "UNKNOWN",
-            data.prediction,
-            data.confidence,
-            data.recommendation,
-            "manual",
-            datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-        ))
-
-        conn.commit()
-        return JSONResponse({"message": "Submission classified successfully"})
-
+        db.commit()
+        return {"message": "Submission marked as processed (Yes)"}
     except Exception as e:
-        conn.rollback()
+        db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
-
-
 
 
 

@@ -5,7 +5,12 @@ import csv
 from fastapi.responses import StreamingResponse
 from io import StringIO
 from datetime import datetime
-
+from fastapi import FastAPI
+from pydantic import BaseModel
+import aiosmtplib
+from fastapi.responses import JSONResponse
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 router = APIRouter()
 
 # Admin-only dependency
@@ -81,18 +86,7 @@ def monthly_report(admin: dict = Depends(get_current_admin),
     return {"monthly_report": report}
 
 # ------------------- Yearly Waste Impact -------------------
-@router.get("/waste_report/yearly")
-def yearly_report(admin: dict = Depends(get_current_admin)):
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT YEAR(created_at) as year, waste_type, COUNT(*) as total
-        FROM submissions
-        GROUP BY year, waste_type
-        ORDER BY year DESC
-    """)
-    report = cursor.fetchall()
-    cursor.close()
-    return {"yearly_report": report}
+
 
 # ------------------- Download CSV -------------------
 @router.get("/download_report")
@@ -128,3 +122,85 @@ def download_report(admin: dict = Depends(get_current_admin),
 
     si.seek(0)
     return StreamingResponse(si, media_type="text/csv", headers={"Content-Disposition": f"attachment; filename={period}_waste_report.csv"})
+
+# In your FastAPI router
+
+# Sri Lanka city coordinates (you can expand this list)
+LOCATION_COORDS = {
+    "Colombo": {"lat": 6.9271, "lng": 79.8612},
+    "Kandy": {"lat": 7.2906, "lng": 80.6337},
+    "Galle": {"lat": 6.0535, "lng": 80.2210},
+    "Jaffna": {"lat": 9.6615, "lng": 80.0255},
+    "Negombo": {"lat": 7.2008, "lng": 79.8737},
+    # fallback default
+    "DEFAULT": {"lat": 7.8731, "lng": 80.7718}
+}
+
+
+@router.get("/risk_zones")
+def risk_zones(admin: dict = Depends(get_current_admin)):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT location, COUNT(*) as count
+        FROM submissions
+        WHERE location IS NOT NULL AND location != ''
+        GROUP BY location
+    """)
+    rows = cursor.fetchall()
+    cursor.close()
+
+    # compute threshold (top 20% = high risk)
+    counts = sorted([r["count"] for r in rows], reverse=True)
+    threshold = counts[int(len(counts) * 0.2)] if counts else 0
+
+    zones = []
+    for r in rows:
+        coords = LOCATION_COORDS.get(r["location"], LOCATION_COORDS["DEFAULT"])
+        zones.append({
+            "location": r["location"],
+            "count": r["count"],
+            "risk": "high" if r["count"] >= threshold else "low",
+            "lat": coords["lat"],
+            "lng": coords["lng"]
+        })
+
+    return {"zones": zones}
+
+class EmailRequest(BaseModel):
+    email: str
+    name: str
+    waste_type: str
+
+@router.post("/send-user-email")
+async def send_user_email(req: EmailRequest):
+    from_email = "prabhashwlive2001@gmail.com"
+    password = "shaaumbtribzkecz"
+
+    msg = MIMEMultipart()
+    msg["From"] = from_email
+    msg["To"] = req.email
+    msg["Subject"] = "Your Waste Submission Has Been Processed"
+
+    body = f"""
+    <html>
+    <body>
+        <p>✅ Hello {req.name},</p>
+        <p>Thank you for your public service! Your submission regarding <b>{req.waste_type}</b> waste has been successfully processed and is now ready for recycling.</p>
+        <p>🌿 We appreciate your contribution to a cleaner environment!</p>
+    </body>
+    </html>
+    """
+    msg.attach(MIMEText(body, "html", "utf-8"))
+
+    try:
+        await aiosmtplib.send(
+            msg,
+            hostname="smtp.gmail.com",
+            port=465,
+            username=from_email,
+            password=password,
+            use_tls=True,
+        )
+        return JSONResponse(content={"status": "success", "message": f"Email sent to {req.email}"})
+    except Exception as e:
+        return JSONResponse(content={"status": "error", "message": str(e)})
