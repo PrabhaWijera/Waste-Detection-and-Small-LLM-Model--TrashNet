@@ -336,6 +336,25 @@ form.addEventListener("submit", async (e) => {
         alert("Error submitting: " + err);
     }
 });
+async function loadMySubmissions() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const res = await fetch("http://127.0.0.1:8000/api/public/my_submissions", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    const data = await res.json();
+
+    // render submissions in a table
+    const list = document.getElementById("submissionList");
+    list.innerHTML = data.map(s => `
+        <tr>
+            <td>${s.waste_type}</td>
+            <td>${s.location}</td>
+            <td>${s.created_at}</td>
+        </tr>
+    `).join("");
+}
 
     </script>
 </body>

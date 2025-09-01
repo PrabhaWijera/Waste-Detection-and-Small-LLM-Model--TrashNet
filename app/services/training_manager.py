@@ -15,7 +15,7 @@ NEW_DATA_DIR = BASE_DIR / ".." / "data" / "new_waste"
 ARCHIVE_DIR = BASE_DIR / ".." / "data" / "archive" / "dataset-resized"
 SPLIT_DIR = BASE_DIR / ".." / "data" / "archive" / "dataset_split"
 OUTPUT_MODEL = BASE_DIR / ".." / "models" / "new_model.pt"
-MIN_SAMPLES = 1  # retrain threshold
+MIN_SAMPLES = 10  # retrain threshold
 
 # Initialize classifier
 classifier = WasteClassifier()

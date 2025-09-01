@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Waste App</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f9; display:flex; justify-content:center; align-items:center; height:100vh; }
+    .login-card { background:#fff; padding:30px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); width:320px; }
+    h2 { margin-top:0; text-align:center; color:#27ae60; }
+    input { width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px; }
+    button { width:100%; padding:12px; background:#27ae60; color:#fff; border:none; border-radius:8px; cursor:pointer; }
+    button:hover { background:#229954; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h2>User Login</h2>
+    <input type="text" id="identifier" placeholder="Email or Phone">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <script>
+    async function login() {
+      const identifier = document.getElementById("identifier").value;
+      if (!identifier) return alert("Enter email or phone");
+
+      const res = await fetch("http://127.0.0.1:8000/api/public/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("userEmail", data.email);
+        alert("Login successful!");
+        window.location.href = "history.html";  // redirect to dashboard
+      } else {
+        alert(data.detail || "Login failed");
+      }
+    }
+  </script>
+</body>
+</html>

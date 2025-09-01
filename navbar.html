@@ -1,0 +1,9 @@
+<nav style="background:#27ae60; color:#fff; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+  <span style="font-weight:bold;">Waste Management</span>
+  <span id="userEmail"></span>
+</nav>
+
+<script>
+  const email = localStorage.getItem("userEmail");
+  document.getElementById("userEmail").textContent = email ? email : "Not logged in";
+</script>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Urban Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family:'Segoe UI',sans-serif; background:#f0f2f5; padding:20px;}
+h1{text-align:center;margin-bottom:30px;}
+h2{margin-bottom:15px;color:#444;}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.08);margin-bottom:25px;}
+table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+th,td{padding:10px 8px;text-align:center;}
+th{background-color:#4CAF50;color:#fff;font-weight:600;}
+tr:nth-child(even){background:#f9f9f9;}
+.badge{padding:4px 8px;border-radius:8px;color:#fff;font-weight:bold;font-size:0.9rem;}
+.processed{background:#4CAF50;}
+.unprocessed{background:#f44336;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:900px){.charts-grid{grid-template-columns:1fr;}}
+.filter-container{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<h1>Urban Admin Dashboard</h1>
+
+<div class="card">
+    <h2>Filters</h2>
+    <div class="filter-container">
+        <label>Start Date: <input type="date" id="startDate"></label>
+        <label>End Date: <input type="date" id="endDate"></label>
+        <button onclick="applyFilters()">Apply Filters</button>
+        <button onclick="downloadReport('monthly')">Download Monthly CSV</button>
+        <button onclick="downloadReport('yearly')">Download Yearly CSV</button>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Normal User Submissions</h2>
+    <table id="normalSubmissionsTable">
+        <thead>
+            <tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Location</th><th>Waste Type</th><th>Processed</th><th>Created At</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div class="charts-grid">
+    <div class="card">
+        <h2>Monthly Waste Impact</h2>
+        <canvas id="monthlyChart"></canvas>
+    </div>
+    <div class="card">
+        <h2>Yearly Waste Impact</h2>
+        <canvas id="yearlyChart"></canvas>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+const headers = {'Authorization':`Bearer ${token}`};
+
+async function loadSubmissions(startDate=null,endDate=null){
+    let url = "http://127.0.0.1:8000/api/admin/normal_submissions";
+    if(startDate||endDate) url += `?start_date=${startDate||''}&end_date=${endDate||''}`;
+    const res = await fetch(url,{headers});
+    const data = await res.json();
+    const tbody = document.querySelector("#normalSubmissionsTable tbody");
+    tbody.innerHTML = data.submissions.map(s=>`
+        <tr>
+            <td>${s.id}</td>
+            <td>${s.name||'-'}</td>
+            <td>${s.email||'-'}</td>
+            <td>${s.phone||'-'}</td>
+            <td>${s.location||'-'}</td>
+            <td>${s.waste_type||'-'}</td>
+            <td><span class="badge ${s.processed?'processed':'unprocessed'}">${s.processed?'Yes':'No'}</span></td>
+            <td>${new Date(s.created_at).toLocaleString()}</td>
+        </tr>
+    `).join("");
+}
+
+async function loadCharts(startDate=null,endDate=null){
+    let monthlyUrl="http://127.0.0.1:8000/api/admin/waste_report/monthly";
+    if(startDate||endDate) monthlyUrl += `?start_date=${startDate||''}&end_date=${endDate||''}`;
+    const monthlyRes = await fetch(monthlyUrl,{headers});
+    const monthlyData = await monthlyRes.json();
+
+    const monthLabels = [...new Set(monthlyData.monthly_report.map(r=>r.month))];
+    const wasteTypes = [...new Set(monthlyData.monthly_report.map(r=>r.waste_type))];
+
+    const datasets = wasteTypes.map(type=>{
+        return {
+            label:type,
+            data:monthLabels.map(m=>{
+                const entry = monthlyData.monthly_report.find(r=>r.month===m && r.waste_type===type);
+                return entry ? entry.total : 0;
+            }),
+            backgroundColor:`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.7)`
+        }
+    });
+
+    new Chart(document.getElementById("monthlyChart"),{
+        type:'bar',
+        data:{labels:monthLabels,datasets:datasets},
+        options:{responsive:true,scales:{y:{beginAtZero:true}}}
+    });
+
+    const yearlyRes = await fetch("http://127.0.0.1:8000/api/admin/waste_report/yearly",{headers});
+    const yearlyData = await yearlyRes.json();
+    const yearLabels = [...new Set(yearlyData.yearly_report.map(r=>r.year))];
+
+    const yearlyDatasets = wasteTypes.map(type=>{
+        return {
+            label:type,
+            data:yearLabels.map(y=>{
+                const entry = yearlyData.yearly_report.find(r=>r.year===y && r.waste_type===type);
+                return entry ? entry.total : 0;
+            }),
+            backgroundColor:`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5)`,
+            fill:true,
+            borderColor:'purple'
+        }
+    });
+
+    new Chart(document.getElementById("yearlyChart"),{
+        type:'line',
+        data:{labels:yearLabels,datasets:yearlyDatasets},
+        options:{responsive:true,scales:{y:{beginAtZero:true}}}
+    });
+}
+
+// Filter by date range
+function applyFilters(){
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    loadSubmissions(startDate,endDate);
+    loadCharts(startDate,endDate);
+}
+
+// Download CSV report
+function downloadReport(period){
+    window.location.href=`http://127.0.0.1:8000/api/admin/download_report?period=${period}`;
+}
+
+// Initialize
+loadSubmissions();
+loadCharts();
+</script>
+</body>
+</html>

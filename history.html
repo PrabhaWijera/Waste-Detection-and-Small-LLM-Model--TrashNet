@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Submissions - Waste App</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:0; }
+    nav { background:#27ae60; color:#fff; padding:15px; display:flex; justify-content:space-between; }
+    table { width:90%; margin:20px auto; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+    th, td { padding:12px; border-bottom:1px solid #eee; text-align:left; }
+    th { background:#ecf0f1; }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav>
+    <span>Waste Management</span>
+    <span id="userEmail"></span>
+  </nav>
+
+  <h2 style="text-align:center; margin-top:20px;">My Waste Submissions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Waste Type</th>
+        <th>Location</th>
+        <th>Urban Center</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="submissionList"></tbody>
+  </table>
+
+  <script>
+    document.getElementById("userEmail").textContent = localStorage.getItem("userEmail") || "Not logged in";
+
+    async function loadMySubmissions() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please login first");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const res = await fetch("http://127.0.0.1:8000/api/public/my_submissions", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const data = await res.json();
+
+      const list = document.getElementById("submissionList");
+      list.innerHTML = data.map(s => `
+        <tr>
+          <td>${s.waste_type}</td>
+          <td>${s.location}</td>
+          <td>${s.urban_center}</td>
+          <td>${s.created_at}</td>
+        </tr>
+      `).join("");
+    }
+
+    loadMySubmissions();
+  </script>
+</body>
+</html>

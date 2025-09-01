@@ -7,6 +7,7 @@ from app.routes.urban_routes import router as user_router
 from app.routes.admin_routes import router as admin_router
 from app.routes.public_user_routes import user_routes
 from app.routes.auth_routes import router as auth_router   # NEW
+from app.routes.urban_features_routes import router as features_router
 app = FastAPI(title="YOLOv8 Waste Management API")
 
 app.add_middleware(
@@ -23,6 +24,8 @@ app.include_router(user_routes, prefix="/api/public", tags=["Public"])
 
 # New routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])     # Register/Login
+app.include_router(features_router, prefix="/api/admin", tags=["Urban Features"])
+
 @app.get("/")
 def root():
     return {"status": "ok", "service": "YOLOv8 Waste API"}
