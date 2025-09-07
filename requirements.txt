@@ -33,3 +33,8 @@ requests
 
 # pip install python-multipart
 # pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#pip install pytest pytest-asyncio httpx pytest-mock pillow
+# pip install fastapi==0.117.1
+# >> pip install "starlette>=0.27,<0.30"
+# >> pip install "uvicorn[standard]"
+# >> pip install pytest pytest-asyncio
